@@ -1,4 +1,4 @@
-package ru.qmbo.mc1.servise;
+package ru.qmbo.mc1.service;
 
 import org.springframework.stereotype.Service;
 import ru.qmbo.mc1.model.Message;

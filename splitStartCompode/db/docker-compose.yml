@@ -7,23 +7,16 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: cycle
     restart: always
-    networks:
-      back:
-        ipv4_address: 172.16.238.2
     ports:
       - "3306:3306"
     volumes:
       - /var/lib/docker/containers/mc1/db/data:/var/lib/mysql
-
-
 networks:
-  back:
+  default:
     driver: bridge
-    internal: true
+    name: maria_db_net
+    attachable: true
     ipam:
       driver: default
       config:
-        - subnet: 172.16.238.1/50
-  default:
-    name: message_network
-    driver: bridge
+        - subnet: 172.28.0.0/16

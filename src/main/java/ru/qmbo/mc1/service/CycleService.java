@@ -1,4 +1,4 @@
-package ru.qmbo.mc1.servise;
+package ru.qmbo.mc1.service;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +21,9 @@ import static java.lang.String.*;
 public class CycleService {
     public static final String IS_WORK_NOW = "Cycle is work now.";
     public static final String START_CYCLE_AT = "Start cycle at: %s";
-    public static final String CYCLE_IS_STOPPED = "Cycle is stopped.Init %s cycles. Lead time: %s";
-    public static final String CYCLE_IS_END = "Cycle is end. Init %s cycles. Lead time: %s";
+    public static final String CYCLE_IS_STOPPED = "Cycle is stopped.Init %s cycles. Lead time: %s s.";
+    public static final String UNTIL_I_STARTED = "Until I started.";
+    public static final String LAST_CYCLE = "Last Cycle. Init %s cycles. Lead time: %s s.";
     private Date startDate;
     private int cycles;
     private final WebsocketClientService clientService;
@@ -70,12 +71,18 @@ public class CycleService {
      * @return the string
      */
     public String stop() {
+        String message = UNTIL_I_STARTED;
+        long lead;
         if (this.doCycle) {
             this.endTime = new Date(System.currentTimeMillis());
             this.doCycle = false;
+            lead = (this.endTime.getTime() - this.startDate.getTime()) / 1000;
+            message = format(CYCLE_IS_STOPPED, this.cycles, lead);
+            this.connectionStop();
+        } else if (this.startDate != null) {
+            lead = (this.endTime.getTime() - this.startDate.getTime()) / 1000;
+            message = format(LAST_CYCLE, this.cycles, lead);
         }
-        long lead = (this.endTime.getTime() - this.startDate.getTime()) / 1000;
-        String message = format(CYCLE_IS_STOPPED, this.cycles, lead);
         log.info(message);
         return message;
     }
@@ -92,14 +99,15 @@ public class CycleService {
             log.debug("Message is back: {}", message);
             this.messageService.saveMessage(message);
         }
-        if ((endTime.getTime() - this.startDate.getTime()) / 1000 < this.workTime) {
+        if ((endTime.getTime() - this.startDate.getTime()) / 1000 < this.workTime && this.doCycle) {
             this.sendMessage(new Message().setMc1Timestamp(this.endTime).setSessionId(++cycles));
         } else {
-            long lead = (this.endTime.getTime() - this.startDate.getTime()) / 1000;
-            String endMessage = format(CYCLE_IS_END, this.cycles, lead);
-            log.info(endMessage);
-            this.doCycle = false;
+            this.stop();
         }
+    }
+
+    private void connectionStop() {
+        this.clientService.connectionStop();
     }
 
     private void sendMessage(Message message) {

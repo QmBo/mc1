@@ -1,4 +1,4 @@
-package ru.qmbo.mc1.servise;
+package ru.qmbo.mc1.service;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -17,4 +17,5 @@ import ru.qmbo.mc1.model.Message;
 @Accessors(chain = true)
 public class BufferService {
     private Message message;
+    private boolean interrupt;
 }

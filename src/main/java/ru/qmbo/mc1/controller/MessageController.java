@@ -2,7 +2,7 @@ package ru.qmbo.mc1.controller;
 
 import org.springframework.web.bind.annotation.*;
 import ru.qmbo.mc1.model.Message;
-import ru.qmbo.mc1.servise.CycleService;
+import ru.qmbo.mc1.service.CycleService;
 
 /**
  * MessageController

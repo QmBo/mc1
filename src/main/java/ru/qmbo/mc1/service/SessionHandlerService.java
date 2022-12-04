@@ -1,4 +1,4 @@
-package ru.qmbo.mc1.config;
+package ru.qmbo.mc1.service;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -7,9 +7,9 @@ import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.stereotype.Component;
 import ru.qmbo.mc1.model.Message;
-import ru.qmbo.mc1.servise.BufferService;
 
 import java.lang.reflect.Type;
+import java.util.concurrent.Executor;
 
 
 /**
@@ -21,7 +21,7 @@ import java.lang.reflect.Type;
  */
 @Component
 @Log4j2
-public class SessionHandler extends StompSessionHandlerAdapter {
+public class SessionHandlerService extends StompSessionHandlerAdapter {
 
     /**
      * The constant WS_ENDPOINT_PREFIX.
@@ -40,13 +40,14 @@ public class SessionHandler extends StompSessionHandlerAdapter {
      */
     public static final String WS_TOPIC_NO_RESPONSE = WS_TOPIC_DESTINATION_PREFIX + "/messagesNoResponse";
     private final BufferService buffer;
+    private StompSession session;
 
     /**
      * Instantiates a new Session handler.
      *
      * @param buffer the buffer
      */
-    public SessionHandler(BufferService buffer) {
+    public SessionHandlerService(BufferService buffer) {
         this.buffer = buffer;
     }
 
@@ -54,7 +55,24 @@ public class SessionHandler extends StompSessionHandlerAdapter {
     @Override
     public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
         try {
-            this.subscribeAndSend(session, this.buffer.getMessage());
+            Runnable work = () -> {
+                while (!this.buffer.isInterrupt()) {
+                    Message message = this.buffer.getMessage();
+                    if (message != null) {
+                        this.subscribeAndSend(message);
+                        this.buffer.setMessage(null);
+                    } else {
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException e) {
+                            log.warn("Interrupted", e);
+                        }
+                    }
+                }
+            };
+            Executor executor = (runnable) -> new Thread(runnable).start();
+            executor.execute(work);
+            this.session = session;
         } catch (Exception e) {
             log.error("Error while sending data");
         }
@@ -64,12 +82,11 @@ public class SessionHandler extends StompSessionHandlerAdapter {
     /**
      * Subscribe and send.
      *
-     * @param session        the session
      * @param requestMessage the request message
      */
-    protected void subscribeAndSend(StompSession session, Message requestMessage) {
-        session.subscribe(WS_TOPIC_NO_RESPONSE, this);
-        session.send(WS_ENDPOINT_PREFIX + SAMPLE_ENDPOINT_WITHOUT_RESPONSE_MESSAGE_MAPPING, requestMessage);
+    public void subscribeAndSend(Message requestMessage) {
+        this.session.subscribe(WS_TOPIC_NO_RESPONSE, this);
+        this.session.send(WS_ENDPOINT_PREFIX + SAMPLE_ENDPOINT_WITHOUT_RESPONSE_MESSAGE_MAPPING, requestMessage);
     }
 
     @Override

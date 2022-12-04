@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   mc1:
-    image: qmbo/mc1
+    image: mc1
     container_name: mc1
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://maria_db:3306/cycle
@@ -18,7 +18,7 @@ services:
       - maria_db
 
   mc2:
-    image: qmbo/mc2
+    image: mc2
     container_name: mc2
     ports:
       - "8081:8081"
@@ -29,7 +29,7 @@ services:
       - mc3
 
   mc3:
-    image: qmbo/mc3
+    image: mc3
     container_name: mc3
     ports:
       - "49001:49001"

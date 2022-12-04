@@ -1,10 +1,9 @@
-package ru.qmbo.mc1.servise;
+package ru.qmbo.mc1.service;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
-import ru.qmbo.mc1.config.SessionHandler;
 import ru.qmbo.mc1.model.Message;
 
 /**
@@ -20,7 +19,7 @@ public class WebsocketClientService {
 
     private final WebSocketStompClient client;
     private final BufferService buffer;
-    private final SessionHandler sessionHandlerNoResponse;
+    private final SessionHandlerService sessionHandlerNoResponse;
     private final String urlEndpointNoResponse;
 
     /**
@@ -32,7 +31,7 @@ public class WebsocketClientService {
      * @param urlEndpointNoResponse    the url endpoint no response
      */
     public WebsocketClientService(
-            WebSocketStompClient client, BufferService buffer, SessionHandler sessionHandlerNoResponse,
+            WebSocketStompClient client, BufferService buffer, SessionHandlerService sessionHandlerNoResponse,
             @Value("${websocket.server.url-no-response}") String urlEndpointNoResponse) {
         this.client = client;
         this.buffer = buffer;
@@ -47,6 +46,14 @@ public class WebsocketClientService {
      */
     public void sendMessage(Message message) {
         this.buffer.setMessage(message);
-        client.connect(urlEndpointNoResponse, sessionHandlerNoResponse);
+        if (message.getSessionId() == 1) {
+            this.buffer.setInterrupt(false);
+            client.connect(urlEndpointNoResponse, sessionHandlerNoResponse);
+        }
+    }
+
+    public void connectionStop() {
+        this.client.stop();
+        this.buffer.setInterrupt(true);
     }
 }

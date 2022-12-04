@@ -4,7 +4,7 @@ services:
     image: qmbo/mc1
     container_name: mc1
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://172.16.238.2:3306/cycle
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://maria_db:3306/cycle
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=password
       - SERVICE_WORK_TIME=10
@@ -67,5 +67,5 @@ services:
 networks:
   default:
     external:
-      name: message_network
+      name: maria_db_net
 
