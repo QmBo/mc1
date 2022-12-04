@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  maria_db:
+    image: mariadb
+    container_name: maria_db
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: cycle
+    restart: always
+    networks:
+      back:
+        ipv4_address: 172.16.238.2
+    ports:
+      - "3306:3306"
+    volumes:
+      - /var/lib/docker/containers/mc1/db/data:/var/lib/mysql
+
+
+networks:
+  back:
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.1/50
+  default:
+    name: message_network
+    driver: bridge

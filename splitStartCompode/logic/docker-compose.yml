@@ -1,0 +1,71 @@
+version: "3.9"
+services:
+  mc1:
+    image: qmbo/mc1
+    container_name: mc1
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://172.16.238.2:3306/cycle
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SERVICE_WORK_TIME=10
+      - WEBSOCKET_SERVER_URL=ws://mc2:8081/sampleEndpoint
+      - WEBSOCKET_SERVER_URL-NO-RESPONSE=ws://mc2:8081/sampleEndpointWithoutResponse
+    ports:
+      - "80:80"
+    restart: always
+    depends_on:
+      - mc2
+
+  mc2:
+    image: qmbo/mc2
+    container_name: mc2
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=broker:9092
+    restart: always
+    depends_on:
+      - mc3
+
+  mc3:
+    image: qmbo/mc3
+    container_name: mc3
+    ports:
+      - "49001:49001"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=broker:9092
+      - MC1_URL=http://mc1:80
+    restart: always
+    depends_on:
+      - broker
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    restart: always
+
+  broker:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: broker
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    restart: always
+
+networks:
+  default:
+    external:
+      name: message_network
+
