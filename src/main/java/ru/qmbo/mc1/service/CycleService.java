@@ -78,7 +78,6 @@ public class CycleService {
             this.doCycle = false;
             lead = (this.endTime.getTime() - this.startDate.getTime()) / 1000;
             message = format(CYCLE_IS_STOPPED, this.cycles, lead);
-            this.connectionStop();
         } else if (this.startDate != null) {
             lead = (this.endTime.getTime() - this.startDate.getTime()) / 1000;
             message = format(LAST_CYCLE, this.cycles, lead);
@@ -104,10 +103,6 @@ public class CycleService {
         } else {
             this.stop();
         }
-    }
-
-    private void connectionStop() {
-        this.clientService.connectionStop();
     }
 
     private void sendMessage(Message message) {

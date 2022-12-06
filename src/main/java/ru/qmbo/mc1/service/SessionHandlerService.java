@@ -9,8 +9,6 @@ import org.springframework.stereotype.Component;
 import ru.qmbo.mc1.model.Message;
 
 import java.lang.reflect.Type;
-import java.util.concurrent.Executor;
-
 
 /**
  * SessionHandler
@@ -39,39 +37,12 @@ public class SessionHandlerService extends StompSessionHandlerAdapter {
      * The constant WS_TOPIC_NO_RESPONSE.
      */
     public static final String WS_TOPIC_NO_RESPONSE = WS_TOPIC_DESTINATION_PREFIX + "/messagesNoResponse";
-    private final BufferService buffer;
     private StompSession session;
-
-    /**
-     * Instantiates a new Session handler.
-     *
-     * @param buffer the buffer
-     */
-    public SessionHandlerService(BufferService buffer) {
-        this.buffer = buffer;
-    }
 
 
     @Override
     public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
         try {
-            Runnable work = () -> {
-                while (!this.buffer.isInterrupt()) {
-                    Message message = this.buffer.getMessage();
-                    if (message != null) {
-                        this.subscribeAndSend(message);
-                        this.buffer.setMessage(null);
-                    } else {
-                        try {
-                            Thread.sleep(1);
-                        } catch (InterruptedException e) {
-                            log.warn("Interrupted", e);
-                        }
-                    }
-                }
-            };
-            Executor executor = (runnable) -> new Thread(runnable).start();
-            executor.execute(work);
             this.session = session;
         } catch (Exception e) {
             log.error("Error while sending data");
